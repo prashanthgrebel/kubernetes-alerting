@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-secret
+  namespace: monitoring
+type: Opaque
+stringData:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'your-email@gmail.com'
+      smtp_auth_username: 'your-email@gmail.com'
+      smtp_auth_password: 'your-email-app-password'
+
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'default-email'
+
+      routes:
+        - match:
+            alertname: HighCPUUsage
+          receiver: 'cpu-email'
+
+        - match:
+            alertname: HighMemoryUsage
+          receiver: 'memory-email'
+
+    receivers:
+      - name: 'default-email'
+        email_configs:
+          - to: 'default-recipient@gmail.com'
+
+      - name: 'cpu-email'
+        email_configs:
+          - to: 'cpu-alerts@gmail.com'
+
+      - name: 'memory-email'
+        email_configs:
+          - to: 'memory-alerts@gmail.com'
