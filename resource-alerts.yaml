@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: resource-usage-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: ResourceUsageAlerts
+      rules:
+        - alert: HighCPUUsage
+          expr: |
+            100 * (sum(rate(container_cpu_usage_seconds_total{container!="",pod!=""}[5m])) 
+            / sum(kube_pod_container_resource_limits{resource="cpu"})) > 80
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU Usage"
+            description: "CPU usage is above 80% for more than 2 minutes."
+
+        - alert: HighMemoryUsage
+          expr: |
+            100 * (sum(container_memory_usage_bytes{container!=""}) 
+            / sum(kube_pod_container_resource_limits{resource="memory"})) > 80
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High Memory Usage"
+            description: "Memory usage is above 80% for more than 2 minutes."
