@@ -1,0 +1,5 @@
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - "alertmanager.monitoring.svc:9093"
