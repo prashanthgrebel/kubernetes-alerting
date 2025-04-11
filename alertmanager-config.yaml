@@ -1,43 +1,62 @@
-global:
-  resolve_timeout: 5m
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'your-email@gmail.com'
-  smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: 'your-app-password'  # 👈 Use an app password or token if needed
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-prometheus-stack-alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    alertmanager: prometheus-stack-alertmanager
+type: Opaque
+stringData:
+  alertmanager.yaml: |
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'your-email@gmail.com'
+      smtp_auth_username: 'your-email@gmail.com'
+      smtp_auth_password: 'your-app-password'  # use a 16-digit Gmail app password
 
-inhibit_rules:
-- equal:
-  - namespace
-  - alertname
-  source_matchers:
-  - severity = critical
-  target_matchers:
-  - severity =~ warning|info
-- equal:
-  - namespace
-  - alertname
-  source_matchers:
-  - severity = warning
-  target_matchers:
-  - severity = info
-- equal:
-  - namespace
-  source_matchers:
-  - alertname = InfoInhibitor
-  target_matchers:
-  - severity = info
-- target_matchers:
-  - alertname = InfoInhibitor
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'email-alerts'
 
-receivers:
-- name: "email-alerts"
-  email_configs:
-  - to: 'recipient@example.com'
-    send_resolved: true
+    receivers:
+    - name: 'email-alerts'
+      email_configs:
+      - to: 'recipient@example.com'
+        from: 'your-email@gmail.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'your-email@gmail.com'
+        auth_password: 'your-app-password'
+        require_tls: true
+        send_resolved: true
 
-route:
-  group_by: ['alertname']
-  group_wait: 10s
-  group_interval: 5m
-  repeat_interval: 1h
-  receiver: "email-alerts"
+    inhibit_rules:
+    - equal:
+      - namespace
+      - alertname
+      source_matchers:
+      - severity = critical
+      target_matchers:
+      - severity =~ warning|info
+
+    - equal:
+      - namespace
+      - alertname
+      source_matchers:
+      - severity = warning
+      target_matchers:
+      - severity = info
+
+    - equal:
+      - namespace
+      source_matchers:
+      - alertname = InfoInhibitor
+      target_matchers:
+      - severity = info
+
+    - target_matchers:
+      - alertname = InfoInhibitor
