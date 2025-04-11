@@ -1,5 +1,36 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
 alerting:
   alertmanagers:
     - static_configs:
-        - targets:
-          - "alertmanager.monitoring.svc:9093"
+        - targets: ['prometheus-stack-alertmanager.monitoring.svc:9093']
+      path_prefix: /
+      scheme: http
+
+rule_files:
+  - /etc/prometheus/rules/*.yaml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+
+  # Add your other scrape jobs here...
+---
+# Helm
+alerting:
+  alertmanagers:
+    - name: prometheus-stack-alertmanager
+      namespace: monitoring
+      port: http
+      path_prefix: /
