@@ -15,5 +15,5 @@ spec:
       labels:
         severity: warning
       annotations:
-        summary: "This is a test alert"
-        description: "If you're seeing this, email alerts are working."
+        summary: "Cluster: {{ $labels.cluster }} - This is a test alert"
+        description: "If you're seeing this, email alerts are working on cluster {{ $labels.cluster }}."
