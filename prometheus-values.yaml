@@ -1,5 +1,6 @@
 alertmanager:
   enabled: true
+  replicas: 1
   config: {}
   alertmanagerSpec:
     configSecret: alertmanager-prometheus-stack-alertmanager
