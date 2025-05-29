@@ -1,0 +1,51 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  namespace: monitoring
+  name: noderesource-alerts
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: kubernetes-alerts
+    rules:
+      # Node down
+      - alert: NodeDown
+        expr: up{job="kubelet"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.instance }} is down in cluster {{ $externalLabels.cluster }}"
+          description: "Prometheus could not scrape {{ $labels.job }} on {{ $labels.instance }} for 2 minutes."
+
+      # High CPU usage
+      - alert: HighNodeCPU
+        expr: 100 * (1 - avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on node {{ $labels.instance }} in cluster {{ $externalLabels.cluster }}"
+          description: "Node is using > 90% CPU for the last 5 minutes."
+
+      # High memory usage
+      - alert: HighNodeMemory
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on node {{ $labels.instance }} in cluster {{ $externalLabels.cluster }}"
+          description: "Memory usage is > 90% on node {{ $labels.instance }}."
+
+      # Disk space usage
+      - alert: NodeDiskAlmostFull
+        expr: (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100 > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk almost full on {{ $externalLabels.instance }} in cluster {{ $externalLabels.cluster }}"
+          description: "Disk space is > 90% used on {{ $labels.instance }}."
+
