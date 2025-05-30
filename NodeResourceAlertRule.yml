@@ -48,4 +48,13 @@ spec:
         annotations:
           summary: "Disk almost full on {{ $externalLabels.instance }} in cluster {{ $externalLabels.cluster }}"
           description: "Disk space is > 90% used on {{ $labels.instance }}."
+          
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready", status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node not ready: {{ $labels.node }}  in cluster {{ $externalLabels.cluster }"
+          description: "Node {{ $labels.node }} is not in Ready state."
 
