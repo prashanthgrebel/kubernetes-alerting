@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: msteams-config
+  namespace: monitoring
+data:
+  connectors.yaml: |
+    connectors:
+      - name: teams-notifications
+        webhook_url: "https://outlook.office.com/webhook/your-tenant-id@your-group-id/IncomingWebhook/your-webhook-id/your-webhook-key"
