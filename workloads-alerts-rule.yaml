@@ -114,5 +114,57 @@ spec:
           annotations:
             summary: "ErrImagePull: {{ $labels.pod }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }}"
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has container(s) failing to pull image (ErrImagePull)."
+        
+        - alert: HighPodCPUUsage
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{image!="", container!=""}[5m])) by (namespace, pod)
+            /
+            sum(kube_pod_container_resource_limits_cpu_cores{container!=""}) by (namespace, pod)
+            > 0.9
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage: {{ $labels.pod }} in {{ $labels.namespace }}"
+            description: "CPU usage of pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is over 90% of its limit."
+
+        #  High Memory Usage by Pod
+        - alert: HighPodMemoryUsage
+          expr: |
+            sum(container_memory_usage_bytes{image!="", container!=""}) by (namespace, pod)
+            /
+            sum(kube_pod_container_resource_limits_memory_bytes{container!=""}) by (namespace, pod)
+            > 0.9
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage: {{ $labels.pod }} in {{ $labels.namespace }}"
+            description: "Memory usage of pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is over 90% of its limit."
+        #  CPU Limit Exceeded
+        - alert: PodCPULimitExceeded
+          expr: |
+            rate(container_cpu_usage_seconds_total{container!=""}[5m])
+            >
+            kube_pod_container_resource_limits_cpu_cores{container!=""}
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} CPU limit exceeded"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more CPU than its defined limit."
+
+        #  Memory Limit Exceeded
+        - alert: PodMemoryLimitExceeded
+          expr: |
+            container_memory_usage_bytes{container!=""}
+            >
+            kube_pod_container_resource_limits_memory_bytes{container!=""}
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} memory limit exceeded"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more memory than its defined limit."
 
 
