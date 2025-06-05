@@ -82,3 +82,37 @@ spec:
           annotations:
             summary: "DaemonSet not ready: {{ $labels.daemonset }} on cluster {{ $externalLabels.cluster }}"
             description: "Not all DaemonSet pods are ready for {{ $labels.daemonset }} in namespace {{ $labels.namespace }}."
+
+        - alert: PodNotReady
+          expr: |
+            sum(kube_pod_status_ready{condition="false"}) by (namespace, pod) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod not ready: {{ $labels.pod }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }}"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in not ready state for more than 2 minutes."
+
+        # ImagePullBackOff
+        - alert: PodImagePullBackOff
+          expr: |
+            kube_pod_container_status_waiting_reason{reason="ImagePullBackOff"} > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ImagePullBackOff: {{ $labels.pod }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }}"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has container(s) in ImagePullBackOff state."
+
+        # ErrImagePull
+        - alert: PodErrImagePull
+          expr: |
+            kube_pod_container_status_waiting_reason{reason="ErrImagePull"} > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ErrImagePull: {{ $labels.pod }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }}"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has container(s) failing to pull image (ErrImagePull)."
+
+
