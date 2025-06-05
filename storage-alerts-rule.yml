@@ -1,0 +1,52 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: storage-alerts-rule
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+    - name: kubernetes-monitoring-alerts
+      rules:
+        #  PVC Not Bound
+        - alert: PersistentVolumeClaimNotBound
+          expr: kube_persistentvolumeclaim_status_phase{phase="Pending"} > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PVC not bound: {{ $labels.persistentvolumeclaim }} on cluster {{ $externalLabels.cluster }"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is not bound for over 2 minutes."
+
+        # PV Pending
+        - alert: PersistentVolumePending
+          expr: kube_persistentvolume_status_phase{phase="Pending"} > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PV pending: {{ $labels.persistentvolume }} on cluster {{ $externalLabels.cluster }"
+            description: "Persistent Volume {{ $labels.persistentvolume }} is in Pending state."
+
+        #  Low Free Storage in PVC
+        - alert: PVCStorageUsageHigh
+          expr: |
+            (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High PVC usage: {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is over 85% full."
+
+        #  Critical Low Storage in PVC
+        - alert: PVCStorageAlmostFull
+          expr: |
+            (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PVC almost full: {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} on cluster {{ $externalLabels.cluster }"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is over 90% full."
