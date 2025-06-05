@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: prometheus-msteams
   namespace: monitoring
+  labels:
+    app: prometheus-msteams
 spec:
   replicas: 1
   selector:
@@ -14,26 +16,18 @@ spec:
         app: prometheus-msteams
     spec:
       containers:
-        - name: prometheus-msteams
-          image: quay.io/prometheusmsteams/prometheus-msteams:latest
-          ports:
-            - containerPort: 2000
-          env:
-            - name: TEAMS_INCOMING_WEBHOOK_URL
-              value: "<YOUR_TEAMS_WEBHOOK_URL>"
-          args:
-            - "--teams-webhook-url=$(TEAMS_INCOMING_WEBHOOK_URL)"
-            - "--listen-address=0.0.0.0:2000"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: prometheus-msteams
-  namespace: monitoring
-spec:
-  selector:
-    app: prometheus-msteams
-  ports:
-    - protocol: TCP
-      port: 2000
-      targetPort: 2000
+      - name: prometheus-msteams
+        image: bzon/prometheus-msteams
+        args:
+          - "-config-file"
+          - "/etc/config/connectors.yaml"
+        ports:
+        - containerPort: 2000
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: msteams-config
