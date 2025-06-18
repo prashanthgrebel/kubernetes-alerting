@@ -57,4 +57,31 @@ spec:
         annotations:
           summary: "Node not ready: {{ $labels.node }}  in cluster {{ $externalLabels.cluster }"
           description: "Node {{ $labels.node }} is not in Ready state."
+        #  Node Disk Pressure
+        - alert: NodeDiskPressure
+          expr: kube_node_status_condition{condition="DiskPressure", status="true"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node disk pressure: {{ $labels.node }} on cluster {{ $externalLabels.cluster }}"
+            description: "Node {{ $labels.node }} is experiencing disk pressure for more than 5 minutes."
+        #  Node Memory Pressure
+        - alert: NodeMemoryPressure
+          expr: kube_node_status_condition{condition="MemoryPressure", status="true"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node memory pressure: {{ $labels.node }} on cluster {{ $externalLabels.cluster }}"
+            description: "Node {{ $labels.node }} is experiencing memory pressure for more than 5 minutes."
+        #  Node Network Unavailable
+        - alert: NodeNetworkUnavailable
+          expr: kube_node_status_condition{condition="NetworkUnavailable", status="true"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node network unavailable: {{ $labels.node }} on cluster {{ $externalLabels.cluster }}"
+            description: "Node {{ $labels.node }} has network unavailable condition for more than 5 minutes."
 
