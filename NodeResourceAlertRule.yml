@@ -75,6 +75,14 @@ spec:
           annotations:
             summary: "Node memory pressure: {{ $labels.node }} on cluster {{ $externalLabels.cluster }}"
             description: "Node {{ $labels.node }} is experiencing memory pressure for more than 5 minutes."
+        - alert: NodeCPUPressure
+          expr: kube_node_status_condition{condition="CPUPressure", status="true"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node CPU pressure: {{ $labels.node }} on cluster {{ $externalLabels.cluster }}"
+            description: "Node {{ $labels.node }} is experiencing CPU pressure for more than 5 minutes."
         #  Node Network Unavailable
         - alert: NodeNetworkUnavailable
           expr: kube_node_status_condition{condition="NetworkUnavailable", status="true"} > 0
