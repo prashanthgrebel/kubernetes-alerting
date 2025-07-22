@@ -1,0 +1,49 @@
+label_replace(
+  sum by (instance) (
+    node_filesystem_size_bytes{mountpoint="/", fstype!="rootfs"}
+  ) / 1024 / 1024 / 1024, 
+  "metric", 
+  "total_gb", 
+  "", 
+  ""
+)
+or 
+label_replace(
+  sum by (instance) (
+    node_filesystem_free_bytes{mountpoint="/", fstype!="rootfs"}
+  ) / 1024 / 1024 / 1024, 
+  "metric", 
+  "available_gb", 
+  "", 
+  ""
+)
+or 
+label_replace(
+  sum by (instance) (
+    node_filesystem_size_bytes{mountpoint="/", fstype!="rootfs"}
+    -
+    node_filesystem_free_bytes{mountpoint="/", fstype!="rootfs"}
+  ) / 1024 / 1024 / 1024, 
+  "metric", 
+  "used_gb", 
+  "", 
+  ""
+)
+or
+label_replace(
+  100 * (
+    sum by (instance) (
+      node_filesystem_size_bytes{mountpoint="/", fstype!="rootfs"}
+      -
+      node_filesystem_free_bytes{mountpoint="/", fstype!="rootfs"}
+    )
+    /
+    sum by (instance) (
+      node_filesystem_size_bytes{mountpoint="/", fstype!="rootfs"}
+    )
+  ),
+  "metric", 
+  "usage_percent", 
+  "", 
+  ""
+)
