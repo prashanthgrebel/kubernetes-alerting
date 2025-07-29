@@ -1,49 +1,75 @@
-"panels": [
-  {
-    "type": "table",
-    "title": "PVC Storage Usage (GB)",
-    "id": 1,
-    "datasource": "Prometheus",
-    "targets": [
-      {
-        "expr": "kubelet_volume_stats_capacity_bytes / 1024 / 1024 / 1024",
-        "refId": "A"
-      },
-      {
-        "expr": "kubelet_volume_stats_used_bytes / 1024 / 1024 / 1024",
-        "refId": "B"
-      },
-      {
-        "expr": "kubelet_volume_stats_available_bytes / 1024 / 1024 / 1024",
-        "refId": "C"
-      }
-    ],
-    "fieldConfig": {
-      "defaults": {
-        "unit": "gigabytes",
-        "decimals": 2
-      }
-    },
-    "transformations": [
-      {
-        "id": "merge",
-        "options": {
-          "joinBy": ["namespace", "persistentvolumeclaim"]
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "PVC Storage Usage (GB)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kubelet_volume_stats_capacity_bytes / 1024 / 1024 / 1024",
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "kubelet_volume_stats_used_bytes / 1024 / 1024 / 1024",
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "kubelet_volume_stats_available_bytes / 1024 / 1024 / 1024",
+          "format": "table"
         }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "gigabytes",
+          "decimals": 2
+        },
+        "overrides": []
       },
-      {
-        "id": "organize",
-        "options": {
-          "renameByName": {
-            "Value": "Total (GB)",
-            "Value 1": "Used (GB)",
-            "Value 2": "Available (GB)"
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "joinBy": ["namespace", "persistentvolumeclaim"]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value": "Total (GB)",
+              "Value 1": "Used (GB)",
+              "Value 2": "Available (GB)"
+            }
           }
         }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
       }
-    ],
-    "options": {
-      "showHeader": true
     }
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "title": "PVC Usage Dashboard",
+  "uid": "pvc-usage-dashboard",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
   }
-]
+}
