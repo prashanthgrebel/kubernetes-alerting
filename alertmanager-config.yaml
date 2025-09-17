@@ -1,89 +1,112 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: alertmanager-prometheus-stack-alertmanager
-  namespace: monitoring
-  labels:
-    app: alertmanager
-    alertmanager: prometheus-stack-alertmanager
-type: Opaque
-stringData:
-  alertmanager.yaml: |
-    global:
-      resolve_timeout: 5m
-      smtp_smarthost: 'smtp.gmail.com:587'
-      smtp_from: 'your-email@gmail.com'
-      smtp_auth_username: 'your-email@gmail.com'
-      smtp_auth_password: 'your-app-password'  # 16-digit Gmail app password
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'your-email@gmail.com'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: 'your-app-password'  # 16-digit Gmail app password
 
-    route:
-      group_by: ['alertname']
-      group_wait: 10s
-      group_interval: 5m
-      repeat_interval: 1h
-      receiver: 'email-alerts'  # default receiver
+route:
+  group_by: ['alertname', 'namespace', 'severity']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: 'email-alerts'  # default receiver
 
-      routes:
-        - matchers:
-            - severity = critical
-          receiver: 'email-and-xmatters'   # send to both email and xMatters
+  routes:
+    # Nifi critical alerts
+    - matchers:
+        - severity = critical
+        - namespace = nifi
+      receiver: 'nifi-critical'
 
-        - matchers:
-            - severity = warning
-          receiver: 'email-alerts'
+    # Boo critical alerts
+    - matchers:
+        - severity = critical
+        - namespace = boo
+      receiver: 'boo-critical'
 
-    receivers:
-    - name: 'email-alerts'
-      email_configs:
-        - to: 'recipient@example.com'
-          from: 'your-email@gmail.com'
-          smarthost: 'smtp.gmail.com:587'
-          auth_username: 'your-email@gmail.com'
-          auth_password: 'your-app-password'
-          require_tls: true
-          send_resolved: true
+    # Other critical alerts → default critical route
+    - matchers:
+        - severity = critical
+      receiver: 'email-and-xmatters'
 
-    - name: 'xmatters-alerts'
-      webhook_configs:
-        - url: 'https://<your-subdomain>.xmatters.com/api/integration/1/functions/<id>/triggers?apiKey=<key>'
-          send_resolved: true
+    # Warnings (all namespaces, unless overridden)
+    - matchers:
+        - severity = warning
+      receiver: 'email-alerts'
 
-    - name: 'email-and-xmatters'
-      email_configs:
-        - to: 'recipient@example.com'
-          from: 'your-email@gmail.com'
-          smarthost: 'smtp.gmail.com:587'
-          auth_username: 'your-email@gmail.com'
-          auth_password: 'your-app-password'
-          require_tls: true
-          send_resolved: true
-      webhook_configs:
-        - url: 'https://<your-subdomain>.xmatters.com/api/integration/1/functions/<id>/triggers?apiKey=<key>'
-          send_resolved: true
+receivers:
+- name: 'email-alerts'
+  email_configs:
+    - to: 'recipient@example.com'
+      from: 'your-email@gmail.com'
+      smarthost: 'smtp.gmail.com:587'
+      auth_username: 'your-email@gmail.com'
+      auth_password: 'your-app-password'
+      require_tls: true
+      send_resolved: true
 
-    inhibit_rules:
-      - equal:
-          - namespace
-          - alertname
-        source_matchers:
-          - severity = critical
-        target_matchers:
-          - severity =~ warning|info
+- name: 'nifi-critical'
+  email_configs:
+    - to: 'nifiadims@txp.com'
+      from: 'your-email@gmail.com'
+      smarthost: 'smtp.gmail.com:587'
+      auth_username: 'your-email@gmail.com'
+      auth_password: 'your-app-password'
+      require_tls: true
+      send_resolved: true
 
-      - equal:
-          - namespace
-          - alertname
-        source_matchers:
-          - severity = warning
-        target_matchers:
-          - severity = info
+- name: 'boo-critical'
+  email_configs:
+    - to: 'boo@txp.com'
+      from: 'your-email@gmail.com'
+      smarthost: 'smtp.gmail.com:587'
+      auth_username: 'your-email@gmail.com'
+      auth_password: 'your-app-password'
+      require_tls: true
+      send_resolved: true
 
-      - equal:
-          - namespace
-        source_matchers:
-          - alertname = InfoInhibitor
-        target_matchers:
-          - severity = info
+- name: 'xmatters-alerts'
+  webhook_configs:
+    - url: 'https://<your-subdomain>.xmatters.com/api/integration/1/functions/<id>/triggers?apiKey=<key>'
+      send_resolved: true
 
-      - target_matchers:
-          - alertname = InfoInhibitor
+- name: 'email-and-xmatters'
+  email_configs:
+    - to: 'recipient@example.com'
+      from: 'your-email@gmail.com'
+      smarthost: 'smtp.gmail.com:587'
+      auth_username: 'your-email@gmail.com'
+      auth_password: 'your-app-password'
+      require_tls: true
+      send_resolved: true
+  webhook_configs:
+    - url: 'https://<your-subdomain>.xmatters.com/api/integration/1/functions/<id>/triggers?apiKey=<key>'
+      send_resolved: true
+
+inhibit_rules:
+  - equal:
+      - namespace
+      - alertname
+    source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity =~ warning|info
+
+  - equal:
+      - namespace
+      - alertname
+    source_matchers:
+      - severity = warning
+    target_matchers:
+      - severity = info
+
+  - equal:
+      - namespace
+    source_matchers:
+      - alertname = InfoInhibitor
+    target_matchers:
+      - severity = info
+
+  - target_matchers:
+      - alertname = InfoInhibitor
