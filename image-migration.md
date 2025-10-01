@@ -23,18 +23,7 @@ Here’s a structured **Images Migration Document** template you can use to migr
    default backend-app mysql:8.0
    ```
 
-2. **For Docker workloads on hosts:**
 
-   ```bash
-   docker ps --format '{{.Names}}: {{.Image}}'
-   ```
-
-   Example:
-
-   ```
-   frontend-app: nginx:1.23
-   backend-app: mysql:8.0
-   ```
 
 3. Create a **mapping table** of current images:
    | Application | Current Image | Tag | Notes |
