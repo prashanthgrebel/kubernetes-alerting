@@ -6,6 +6,7 @@ kubectl create secret docker-registry ecr-creds \
   --docker-username=AWS \
   --docker-password=$(aws ecr get-login-password --region us-east-1) \
   --namespace="$NAMESPACE"
+kubectl get sa default -n $NAMESPACE
 
 # Patch the default service account to use the secret
 kubectl patch serviceaccount default \
